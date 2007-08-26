@@ -1,0 +1,17 @@
+Revision history for Perl extension DBIx::Admin::CreateTable.
+
+1.04  Thu Aug 23 15:31:00 2007
+	- Expand docs even more
+	- Rename generate_sequence_name() to generate_primary_sequence_name()
+
+1.03  Wed Aug 15 13:58:00 2007
+	- Expand docs per method with tables documenting behaviour per database vendor
+
+1.02  Fri Jun 09 14:54:00 2006
+	- Patch sequence handling code to work with Oracle
+
+1.01  Tue May 16 14:09:00 2006
+	- Add methods reset_all_sequences and reset_sequence
+
+1.00  Thu May  8 14:50:00 2006
+	- Original version

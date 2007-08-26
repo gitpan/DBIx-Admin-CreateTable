@@ -1,0 +1,34 @@
+DBIx::Admin::CreateTable. Db vendor 'MYSQL'.
+Db vendor: MYSQL.
+Primary index name: .
+DBIx::Admin::CreateTable. SQL: drop table test.
+DBIx::Admin::CreateTable. Dropped table 'test'.
+DBIx::Admin::CreateTable. SQL: create table test
+(
+id integer auto_increment primary key,
+data varchar(255)
+)
+.
+DBIx::Admin::CreateTable. Created table 'test'.
+
+Insert test data.
+
+Retrieve test data.
+
+Expecting:
+1. One.
+2. Two.
+3. Three.
+4. Four.
+5. Five.
+9. Nine.
+
+Retrieved:
+1. One.
+2. Two.
+3. Three.
+4. Four.
+5. Five.
+9. Nine.
+
+Error in my_thread_global_end(): 1 threads didn't exit
