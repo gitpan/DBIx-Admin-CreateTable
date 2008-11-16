@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '1.04';
+our $VERSION = '2.00';
 
 # -----------------------------------------------
 
@@ -46,9 +46,9 @@ our $VERSION = '1.04';
 {
 	my(%_attr_data) =
 	(	# Alphabetical order.
-		_db_vendor	=> '',
-		_dbh		=> '',
-		_verbose	=> 0,
+		_db_vendor => '',
+		_dbh       => '',
+		_verbose   => 0,
 	);
 
 	sub _default_for
@@ -63,19 +63,19 @@ our $VERSION = '1.04';
 		keys %_attr_data;
 	}
 
-}	# End of encapsulated class data.
+} # End of encapsulated class data.
 
 # --------------------------------------------------
 
 sub create_table
 {
-	my($self, $sql, $arg)	= @_;
-	my($table_name)			= $sql;
-	$table_name				=~ s/^\s*create\s+table\s+([a-z_]+).+$/$1/is;
+	my($self, $sql, $arg) = @_;
+	my($table_name)       = $sql;
+	$table_name           =~ s/^\s*create\s+table\s+([a-z_]+).+$/$1/is;
 
-	$arg = {}								if (! defined $arg);
-	$$arg{$table_name} = {}					if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0	if (! defined $$arg{$table_name}{'no_sequence'});
+	$arg = {}                             if (! defined $arg);
+	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
+	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
 
 	if (! $$arg{$table_name}{'no_sequence'})
 	{
@@ -85,19 +85,33 @@ sub create_table
 		{
 			my($sql) = "create sequence $sequence_name";
 
-			eval{$$self{'_dbh'} -> do($sql)};
+			$$self{'_dbh'} -> do($sql);
 
 			print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-			print STDERR __PACKAGE__, ". Created sequence '$sequence_name'. \n" if ($$self{'_verbose'} && ! $@);
+
+			if ($$self{'_dbh'} -> errstr() )
+			{
+				return $$self{'_dbh'} -> errstr(); # Failure.
+			}
+
+			print STDERR __PACKAGE__, ". Created sequence '$sequence_name'. \n" if ($$self{'_verbose'});
 		}
 	}
 
-	eval{$$self{'_dbh'} -> do($sql)};
+	$$self{'_dbh'} -> do($sql);
 
 	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-	print STDERR __PACKAGE__, ". Created table '$table_name'. \n" if ($$self{'_verbose'} && ! $@);
 
-}	# End of create_table.
+	if ($$self{'_dbh'} -> errstr() )
+	{
+		return $$self{'_dbh'} -> errstr(); # Failure.
+	}
+
+	print STDERR __PACKAGE__, ". Created table '$table_name'. \n" if ($$self{'_verbose'});
+
+	return ''; # Success.
+
+} # End of create_table.
 
 # --------------------------------------------------
 
@@ -107,71 +121,81 @@ sub db_vendor
 
 	return $$self{'_db_vendor'};
 
-}	# End of db_vendor.
+} # End of db_vendor.
 
 # --------------------------------------------------
 
 sub drop_table
 {
-	my($self, $table_name, $arg)	= @_;
-	my($sequence_name)				= $self -> generate_primary_sequence_name($table_name);
+	my($self, $table_name, $arg) = @_;
+	my($sequence_name)           = $self -> generate_primary_sequence_name($table_name);
 
-	$arg = {}								if (! defined $arg);
-	$$arg{$table_name} = {}					if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0	if (! defined $$arg{$table_name}{'no_sequence'});
+	# Turn off RaiseError so we don't error if the sequence and table being deleted do not exist.
+
+	local $$self{'_dbh'}{'RaiseError'};
+
+	$arg = {}                             if (! defined $arg);
+	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
+	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
 
 	my($sql);
+
+	# For Oracle, drop the sequence before dropping the table.
 
 	if ( ($$self{'_db_vendor'} eq 'ORACLE') && ! $$arg{$table_name}{'no_sequence'})
 	{
 		$sql = "drop sequence $sequence_name";
 
-		eval{$$self{'_dbh'} -> do($sql)};
+		$$self{'_dbh'} -> do($sql);
 
 		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'} && ! $@);
+		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'});
 	}
 
 	$sql = "drop table $table_name";
 
-	eval{$$self{'_dbh'} -> do($sql)};
+	$$self{'_dbh'} -> do($sql);
 
 	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-	print STDERR __PACKAGE__, ". Dropped table '$table_name'. \n" if ($$self{'_verbose'} && ! $@);
+	print STDERR __PACKAGE__, ". Dropped table '$table_name'. \n" if ($$self{'_verbose'});
+
+	# For Postgres, drop the sequence after dropping the table.
 
 	if ( ($$self{'_db_vendor'} eq 'POSTGRESQL') && ! $$arg{$table_name}{'no_sequence'})
 	{
 		$sql = "drop sequence $sequence_name";
 
-		eval{$$self{'_dbh'} -> do($sql)};
+		$$self{'_dbh'} -> do($sql);
 
 		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'} && ! $@);
+		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'});
 	}
 
-}	# End of drop_table.
+	return '';
+
+} # End of drop_table.
 
 # --------------------------------------------------
 
 sub generate_primary_index_name
 {
-	my($self, $table_name)						= @_;
-	$$self{'_primary_index_name'}{$table_name}	||=
+	my($self, $table_name)                     = @_;
+	$$self{'_primary_index_name'}{$table_name} ||=
 	$$self{'_db_vendor'} eq 'POSTGRESQL'
 	? "${table_name}_pkey"
 	: ''; # MySQL, Oracle.
 
 	return $$self{'_primary_index_name'}{$table_name};
 
-}	# End of generate_primary_index_name.
+} # End of generate_primary_index_name.
 
 # --------------------------------------------------
 
 sub generate_primary_key_sql
 {
-	my($self, $table_name)	= @_;
-	my($sequence_name)		= $self -> generate_primary_sequence_name($table_name);
-	my($primary_key)		=
+	my($self, $table_name) = @_;
+	my($sequence_name)     = $self -> generate_primary_sequence_name($table_name);
+	my($primary_key)       =
 	$$self{'_db_vendor'} eq 'MYSQL'
 	? 'integer auto_increment primary key'
 	: $$self{'_db_vendor'} eq 'ORACLE'
@@ -180,28 +204,28 @@ sub generate_primary_key_sql
 
 	return $primary_key;
 
-}	# End of generate_primary_key_sql.
+} # End of generate_primary_key_sql.
 
 # --------------------------------------------------
 
 sub generate_primary_sequence_name
 {
-	my($self, $table_name)					= @_;
-	$$self{'_sequence_name'}{$table_name}	||=
+	my($self, $table_name)                = @_;
+	$$self{'_sequence_name'}{$table_name} ||=
 	$$self{'_db_vendor'} eq 'MYSQL'
 	? ''
 	: "${table_name}_id_seq"; # Oracle, Postgres.
 
 	return $$self{'_sequence_name'}{$table_name};
 
-}	# End of generate_primary_sequence_name.
+} # End of generate_primary_sequence_name.
 
 # -----------------------------------------------
 
 sub new
 {
-	my($class, %arg)	= @_;
-	my($self)			= bless({}, $class);
+	my($class, %arg) = @_;
+	my($self)        = bless({}, $class);
 
 	for my $attr_name ($self -> _standard_keys() )
 	{
@@ -219,15 +243,15 @@ sub new
 
 	Carp::croak("You must supply a value for the 'dbh' parameter") if (! $$self{'_dbh'});
 
-	$$self{'_db_vendor'}			= uc $$self{'_dbh'} -> get_info(17); # SQL_DBMS_NAME.
-	$$self{'_primary_index_name'}	= {};
-	$$self{'_sequence_name'}		= {};
+	$$self{'_db_vendor'}          = uc $$self{'_dbh'} -> get_info(17); # SQL_DBMS_NAME.
+	$$self{'_primary_index_name'} = {};
+	$$self{'_sequence_name'}      = {};
 
 	print STDERR __PACKAGE__, ". Db vendor '$$self{'_db_vendor'}'. \n" if ($$self{'_verbose'});
 
 	return $self;
 
-}	# End of new.
+} # End of new.
 
 # -----------------------------------------------
 # Assumption: This code is only called in the case
@@ -251,7 +275,7 @@ sub reset_all_sequences
 		$self -> reset_sequence($_, $arg) for keys %{$$self{'_sequence_name'} };
 	}
 
-}	# End of reset_all_sequences.
+} # End of reset_all_sequences.
 
 # -----------------------------------------------
 
@@ -259,20 +283,20 @@ sub reset_sequence
 {
 	my($self, $table_name, $arg) = @_;
 
-	$arg = {}								if (! defined $arg);
-	$$arg{$table_name} = {}					if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0	if (! defined $$arg{$table_name}{'no_sequence'});
+	$arg = {}                             if (! defined $arg);
+	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
+	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
 
 	if (! $$arg{$table_name}{'no_sequence'})
 	{
-		my($sequence_name)	= $self -> generate_primary_sequence_name($table_name);
-		my($sth)			= $$self{'_dbh'} -> prepare("select count(*) from $table_name");
+		my($sequence_name) = $self -> generate_primary_sequence_name($table_name);
+		my($sth)           = $$self{'_dbh'} -> prepare("select count(*) from $table_name");
 
 		$sth -> execute();
 
-		my($max)	= $sth -> fetch();
-		$max		= $$max[0] || 0;
-		my($sql)	= "select setval('$sequence_name', $max)";
+		my($max) = $sth -> fetch();
+		$max     = $$max[0] || 0;
+		my($sql) = "select setval('$sequence_name', $max)";
 
 		$sth -> finish();
 		$$self{'_dbh'} -> do($sql);
@@ -281,7 +305,7 @@ sub reset_sequence
 		print STDERR __PACKAGE__, ". Reset table '$table_name', sequence '$sequence_name' to $max. \n" if ($$self{'_verbose'});
 	}
 
-}	# End of reset_sequence.
+} # End of reset_sequence.
 
 # --------------------------------------------------
 
@@ -383,7 +407,7 @@ The default is 0.
 
 =head1 Method: create_table($sql, $arg)
 
-Returns nothing.
+Returns '' (empty string) if successful and DBI's errstr() if there is an error.
 
 $sql is the SQL to create the table.
 
@@ -502,7 +526,7 @@ Return string:
 
 =head1 Method: drop_table($table_name, $arg)
 
-Returns nothing.
+Returns '' (empty string).
 
 $table_name is the name of the table to drop.
 
@@ -541,6 +565,9 @@ SQL:
 	| Postgres |       drop table $table_name &       | drop table $table_name |
 	|          |  drop sequence ${table_name}_id_seq  |                        |
 	+----------|--------------------------------------|------------------------+
+
+Note: drop_table() turns off RaiseError so we don't error if the sequence and table being deleted do not exist.
+This is new in V 2.00.
 
 =head1 Method: generate_primary_index_name($table_name)
 

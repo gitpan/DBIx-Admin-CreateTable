@@ -1,5 +1,17 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.00  Sun Nov 16 12:06:00 2008
+	- Convert various files from DOS to Unix format
+	- Reformat the source of CreateTable.pm, Build.PL and Makefile.PL, a bit
+	- Rename the test files (pod.t => 0.pod.t, test.t => 1.test.t)
+	- Add t/2.syntax.error.t
+	- Only run tests in t/2.syntax.error.t if $DBI_DSN, $DBI_USER and $DBI_PASS are defined
+	- Remove eval
+	- Localize RaiseError in drop_table(), so as to not error when table does not exist
+	- Make create_table return DBI's errstr() on fail or '' on success, so result can be tested
+	- Make drop_table return '' on success, so result can be tested (in t/2.syntax.error.t)
+	- Remove FindBin::Real from list of required modules
+
 1.04  Thu Aug 23 15:31:00 2007
 	- Expand docs even more
 	- Rename generate_sequence_name() to generate_primary_sequence_name()

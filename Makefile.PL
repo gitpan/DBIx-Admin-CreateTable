@@ -1,5 +1,7 @@
 use ExtUtils::MakeMaker;
 
+print "The tests in t/2.syntax.error.t will only by run if \$DBI_DSN, \$DBI_USER and \$DBI_PASS are defined. \n";
+
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
@@ -7,27 +9,27 @@ WriteMakefile
 (
 	($] ge '5.005') ?
 	(
-		'AUTHOR' => 'Ron Savage (ron@savage.net.au)',
-		'ABSTRACT' => 'A module for creating and dropping tables, primary indexes, and sequences',
+		AUTHOR   => 'Ron Savage (ron@savage.net.au)',
+		ABSTRACT => 'A module for creating and dropping tables, primary indexes, and sequences',
     ) : (),
-	clean			=>
+	clean =>
 	{
-		FILES		=> 'blib/* Makefile MANIFEST DBIx-Admin-CreateTable-*'
+		FILES => 'blib/* Makefile MANIFEST DBIx-Admin-CreateTable-*'
 	},
-	dist			=>
+	dist =>
 	{
-		COMPRESS	=> 'gzip',
-		SUFFIX		=> 'gz'
+		COMPRESS => 'gzip',
+		SUFFIX   => 'gz'
 	},
-	DISTNAME		=> 'DBIx-Admin-CreateTable',
-	NAME			=> 'DBIx::Admin::CreateTable',
-	PL_FILES		=> {},
-	PREREQ_PM		=>
+	DISTNAME  => 'DBIx-Admin-CreateTable',
+	NAME      => 'DBIx::Admin::CreateTable',
+	PL_FILES  => {},
+	PREREQ_PM =>
 	{
-		Carp			=> 0,
-		FindBin::Real	=> 0,
-		Test::More		=> 0,
-		Test::Pod		=> 0,
+		Carp       => 0,
+		Test::More => 0,
+		Test::Pod  => 0,
 	},
-	VERSION_FROM	=> 'lib/DBIx/Admin/CreateTable.pm',
+	VERSION_FROM => 'lib/DBIx/Admin/CreateTable.pm',
 );
+

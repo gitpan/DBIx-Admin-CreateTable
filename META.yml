@@ -1,6 +1,6 @@
 ---
 name: DBIx-Admin-CreateTable
-version: 1.04
+version: 2.00
 author:
   - 'Ron Savage <ron@savage.net.au>'
 abstract: A module for creating and dropping tables and sequences
@@ -9,15 +9,14 @@ resources:
   license: http://opensource.org/licenses/artistic-license.php
 requires:
   Carp: 0
-  FindBin::Real: 0
 build_requires:
   Test::More: 0
   Test::Pod: 0
 provides:
   DBIx::Admin::CreateTable:
     file: lib/DBIx/Admin/CreateTable.pm
-    version: 1.04
-generated_by: Module::Build version 0.2805
+    version: 2.00
+generated_by: Module::Build version 0.280801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

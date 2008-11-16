@@ -1,5 +1,5 @@
-Build.bat
 Build.PL
+Changelog.ini
 Changes.txt
 examples/creator.pl
 examples/mysql.creator.log
@@ -8,8 +8,8 @@ examples/postgres.creator.log
 lib/DBIx/Admin/CreateTable.pm
 Makefile.PL
 MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
 README
-t/pod.t
-t/test.t
+t/0.pod.t
+t/1.load.t
+t/2.syntax.error.t
+META.yml
