@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
 
 # -----------------------------------------------
 
@@ -183,7 +183,7 @@ sub generate_primary_index_name
 	$$self{'_primary_index_name'}{$table_name} ||=
 	$$self{'_db_vendor'} eq 'POSTGRESQL'
 	? "${table_name}_pkey"
-	: ''; # MySQL, Oracle.
+	: ''; # MySQL, Oracle, SQLite.
 
 	return $$self{'_primary_index_name'}{$table_name};
 
@@ -196,8 +196,8 @@ sub generate_primary_key_sql
 	my($self, $table_name) = @_;
 	my($sequence_name)     = $self -> generate_primary_sequence_name($table_name);
 	my($primary_key)       =
-	$$self{'_db_vendor'} eq 'MYSQL'
-	? 'integer auto_increment primary key'
+	( ($$self{'_db_vendor'} eq 'MYSQL') || ($$self{'_db_vendor'} eq 'SQLITE') )
+	? 'integer primary key auto_increment'
 	: $$self{'_db_vendor'} eq 'ORACLE'
 	? 'integer primary key'
 	: "integer primary key default nextval('$sequence_name')"; # Postgres.
@@ -212,7 +212,7 @@ sub generate_primary_sequence_name
 {
 	my($self, $table_name)                = @_;
 	$$self{'_sequence_name'}{$table_name} ||=
-	$$self{'_db_vendor'} eq 'MYSQL'
+	( ($$self{'_db_vendor'} eq 'MYSQL') || ($$self{'_db_vendor'} eq 'SQLITE') )
 	? ''
 	: "${table_name}_id_seq"; # Oracle, Postgres.
 
@@ -479,6 +479,8 @@ Action:
 	+----------|------------------------------|--------------------+
 	| Postgres | Create sequence before table |    Create table    |
 	+----------|------------------------------|--------------------+
+	|  SQLite  |        Create table          |    Create table    |
+	+----------|------------------------------|--------------------+
 
 SQL:
 
@@ -490,8 +492,8 @@ SQL:
 	|  Vendor  |              {no_sequence => 0}          |            {no_sequence => 1}            |
 	+----------|------------------------------------------|------------------------------------------+
 	|  MySQL   |         create table $table_name         |         create table $table_name         |
-	|          |        (id integer auto_increment        |        (id integer auto_increment        |
-	|          |              primary key,                |              primary key,                |
+	|          |        (id integer primary key           |        (id integer auto_increment        |
+	|          |              auto_increment,             |              primary key,                |
 	|          |           data varchar(255) )            |           data varchar(255) )            |
 	+----------|------------------------------------------|------------------------------------------+
 	|  Oracle  |  create sequence ${table_name}_id_seq &  |                                          |
@@ -504,6 +506,11 @@ SQL:
 	|          |         (id integer primary key          |         (id integer primary key          |
 	|          | default nextval("${table_name}_id_seq"), | default nextval("${table_name}_id_seq"), |
 	|          |            data varchar(255) )           |            data varchar(255) )           |
+	+----------|------------------------------------------|------------------------------------------+
+	|  SQLite  |         create table $table_name         |         create table $table_name         |
+	|          |        (id integer primary key           |        (id integer auto_increment        |
+	|          |              auto_increment,             |              primary key,                |
+	|          |           data varchar(255) )            |           data varchar(255) )            |
 	+----------|------------------------------------------|------------------------------------------+
 
 =head1 Method: db_vendor()
@@ -522,6 +529,8 @@ Return string:
 	|  Oracle  |   ORACLE   |
 	+----------|------------+
 	| Postgres | POSTGRESQL |
+	+----------|------------+
+	|  SQLite  |   SQLITE   |
 	+----------|------------+
 
 =head1 Method: drop_table($table_name, $arg)
@@ -547,6 +556,8 @@ Action:
 	+----------|----------------------------|--------------------+
 	| Postgres | Drop sequence after table  |     Drop table     |
 	+----------|----------------------------|--------------------+
+	|  SQLite  |         Drop table         |     Drop table     |
+	+----------|----------------------------|--------------------+
 
 SQL:
 
@@ -564,6 +575,8 @@ SQL:
 	+----------|--------------------------------------|------------------------+
 	| Postgres |       drop table $table_name &       | drop table $table_name |
 	|          |  drop sequence ${table_name}_id_seq  |                        |
+	+----------|--------------------------------------|------------------------+
+	|  SQLite  |        drop table $table_name        | drop table $table_name |
 	+----------|--------------------------------------|------------------------+
 
 Note: drop_table() turns off RaiseError so we don't error if the sequence and table being deleted do not exist.
@@ -588,6 +601,8 @@ SQL:
 	+----------|--------------------+
 	| Postgres | ${table_name}_pkey |
 	+----------|--------------------+
+	|  SQLite  |                    |
+	+----------|--------------------+
 
 =head1 Method: generate_primary_key_sql($table_name)
 
@@ -603,11 +618,13 @@ SQL:
 	+----------|-----------------------------------------------------+
 	|  Vendor  |                       SQL                           |
 	+----------|-----------------------------------------------------+
-	|  MySQL   |     integer auto_increment not null primary key     |
+	|  MySQL   |         integer primary key auto_increment          |
 	+----------|-----------------------------------------------------+
 	|  Oracle  |               integer primary key                   |
 	+----------|-----------------------------------------------------+
 	| Postgres | integer primary key default nextval($sequence_name) |
+	+----------|-----------------------------------------------------+
+	|  SQLite  |         integer primary key auto_increment          |
 	+----------|-----------------------------------------------------+
 
 =head1 Method: generate_primary_sequence_name($table_name)
@@ -626,6 +643,8 @@ SQL:
 	|  Oracle  | ${table_name}_id_seq |
 	+----------|----------------------+
 	| Postgres | ${table_name}_id_seq |
+	+----------|----------------------+
+	|  SQLite  |                      |
 	+----------|----------------------+
 
 =head1 Method: reset_all_sequences($arg)
@@ -664,6 +683,8 @@ Summary:
 	+----------|-------------------------------------------------------+
 	| Postgres | Call reset_sequence($table_name, $arg) for all tables |
 	+----------|-------------------------------------------------------+
+	|  SQLite  |                    Do nothing                         |
+	+----------|-------------------------------------------------------+
 
 =head1 Method: reset_sequence($table_name, $arg)
 
@@ -688,6 +709,8 @@ Summary:
 	+----------|--------------------|--------------------+
 	| Postgres | Set sequence value |     Do nothing     |
 	+----------|--------------------|--------------------+
+	|  SQLite  |    Do nothing      |     Do nothing     |
+	+----------|--------------------|--------------------+
 
 =head1 FAQ
 
@@ -708,6 +731,8 @@ SQL for insert:
 	|  Oracle  | insert into $table_name (id, data) values ($sequence_name.nextval, ?) |
 	+----------|-----------------------------------------------------------------------+
 	| Postgres |               insert into $table_name (data) values (?)               |
+	+----------|-----------------------------------------------------------------------+
+	|  SQLite  |          insert into $table_name (id, data) values (undef, ?)         |
 	+----------|-----------------------------------------------------------------------+
 
 Q: Do I have to use a sequence to populate a primary key?
@@ -730,6 +755,8 @@ SQL for insert:
 	+----------|--------------------------------------------------+
 	| Postgres | insert into $table_name (id, data) values (?, ?) |
 	+----------|--------------------------------------------------+
+	|  SQLite  | insert into $table_name (id, data) values (?, ?) |
+	+----------|--------------------------------------------------+
 
 Q: Are primary keys always not null and unique?
 
@@ -748,6 +775,8 @@ A: It matters?
 	|  Oracle  | 10.2.0.1.0 |
 	+----------|------------+
 	| Postgres |  8.2.4-1   |
+	+----------|------------+
+	|  SQLite  |   3.4.2    |
 	+----------|------------+
 
 =head1 Required Modules

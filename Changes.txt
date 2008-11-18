@@ -1,5 +1,11 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.01  Tuw Nov 18 10:34:00 2008
+	- Add support for SQLite. Note: My code for SQLite uses 'integer primary key auto_increment'
+	  as the definition of the primary key's type. To get the autoincrement part of that to work,
+	  you must provide a NULL - i.e. a Perl undef - for your primary key column when inserting a
+	  new record into the database
+
 2.00  Sun Nov 16 12:06:00 2008
 	- Convert various files from DOS to Unix format
 	- Reformat the source of CreateTable.pm, Build.PL and Makefile.PL, a bit
