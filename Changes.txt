@@ -1,6 +1,14 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
-2.01  Tuw Nov 18 10:34:00 2008
+2.02  Sun Nov 23 10:08:00 2008
+	- Add DBI to Build.PL and Makefile.PL since:
+		o t/2.syntax.error.t uses it
+		o CPAN testers were getting errors
+		o Callers must create a $dbh, but this module doesn't actually use DBI
+	- Fix typo in Changes.txt on the line 2.01...
+	- Generate Changelog.ini as I should have with the last version
+
+2.01  Tue Nov 18 10:34:00 2008
 	- Add support for SQLite. Note: My code for SQLite uses 'integer primary key auto_increment'
 	  as the definition of the primary key's type. To get the autoincrement part of that to work,
 	  you must provide a NULL - i.e. a Perl undef - for your primary key column when inserting a

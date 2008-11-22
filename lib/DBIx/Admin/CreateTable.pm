@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '2.01';
+our $VERSION = '2.02';
 
 # -----------------------------------------------
 
@@ -803,3 +803,4 @@ Australian copyright (c) 2006, Ron Savage. All rights reserved.
 	http://www.opensource.org/licenses/index.html
 
 =cut
+

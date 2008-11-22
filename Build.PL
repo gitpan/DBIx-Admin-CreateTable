@@ -15,6 +15,7 @@ Module::Build -> new
 	requires =>
 	{
 		Carp => 0,
+		DBI  => 0,
 	},
 ) -> create_build_script();
 

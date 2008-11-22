@@ -34,3 +34,4 @@ id $primary_key_sql
 data varchar(255)
 )
 SQL
+
