@@ -1,6 +1,6 @@
 ---
 name: DBIx-Admin-CreateTable
-version: 2.02
+version: 2.03
 author:
   - 'Ron Savage <ron@savage.net.au>'
 abstract: A module for creating and dropping tables and sequences
@@ -16,7 +16,7 @@ build_requires:
 provides:
   DBIx::Admin::CreateTable:
     file: lib/DBIx/Admin/CreateTable.pm
-    version: 2.02
+    version: 2.03
 generated_by: Module::Build version 0.280801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
