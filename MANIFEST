@@ -1,6 +1,6 @@
 Build.PL
 Changelog.ini
-Changes.txt
+CHANGES
 examples/creator.pl
 examples/mysql.creator.log
 examples/oracle.creator.log

@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '2.03';
+our $VERSION = '2.04';
 
 # -----------------------------------------------
 
@@ -196,8 +196,10 @@ sub generate_primary_key_sql
 	my($self, $table_name) = @_;
 	my($sequence_name)     = $self -> generate_primary_sequence_name($table_name);
 	my($primary_key)       =
-	( ($$self{'_db_vendor'} eq 'MYSQL') || ($$self{'_db_vendor'} eq 'SQLITE') )
+	($$self{'_db_vendor'} eq 'MYSQL')
 	? 'integer primary key auto_increment'
+	: ($$self{'_db_vendor'} eq 'SQLITE')
+	? 'integer primary key autoincrement'
 	: $$self{'_db_vendor'} eq 'ORACLE'
 	? 'integer primary key'
 	: "integer primary key default nextval('$sequence_name')"; # Postgres.
@@ -508,7 +510,7 @@ SQL:
 	|          |            data varchar(255) )           |            data varchar(255) )           |
 	+----------|------------------------------------------|------------------------------------------+
 	|  SQLite  |         create table $table_name         |         create table $table_name         |
-	|          |        (id integer primary key           |        (id integer auto_increment        |
+	|          |        (id integer primary key           |        (id integer autoincrement         |
 	|          |              auto_increment,             |              primary key,                |
 	|          |           data varchar(255) )            |           data varchar(255) )            |
 	+----------|------------------------------------------|------------------------------------------+
@@ -624,7 +626,7 @@ SQL:
 	+----------|-----------------------------------------------------+
 	| Postgres | integer primary key default nextval($sequence_name) |
 	+----------|-----------------------------------------------------+
-	|  SQLite  |         integer primary key auto_increment          |
+	|  SQLite  |         integer primary key autoincrement          |
 	+----------|-----------------------------------------------------+
 
 =head1 Method: generate_primary_sequence_name($table_name)
