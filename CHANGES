@@ -1,5 +1,18 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.07  Mon May 21 16:51:00 2010
+	- Spelling: MySQL uses auto_increment; SQLite uses autoincrement.
+		This should have been done for V 2.04.
+	- Remove references to Moose and namespace::autoclean from 2.06 below.
+
+2.06  Sun Feb 21 12:54:54 2010
+	- Remove text 'All rights reserved' (for Debian licensing).
+	- Remove POD heads 'Required Modules' and 'Changes'.
+	- Replace personal doc root with /var/www.
+
+2.05  Wed Feb 10 13:52:44 2010
+	- Add META.yml. Update MANIFEST.SKIP. Add MANIFEST and MYMETA.yml.
+
 2.04  Wed Sep 16 14:12:00 2009
 	  - Change auto_increment to autoincrement for SQLite.
 	  - Rename Changes.txt to CHANGES.

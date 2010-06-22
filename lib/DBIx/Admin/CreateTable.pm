@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '2.04';
+our $VERSION = '2.07';
 
 # -----------------------------------------------
 
@@ -511,7 +511,7 @@ SQL:
 	+----------|------------------------------------------|------------------------------------------+
 	|  SQLite  |         create table $table_name         |         create table $table_name         |
 	|          |        (id integer primary key           |        (id integer autoincrement         |
-	|          |              auto_increment,             |              primary key,                |
+	|          |              autoincrement,              |              primary key,                |
 	|          |           data varchar(255) )            |           data varchar(255) )            |
 	+----------|------------------------------------------|------------------------------------------+
 
@@ -781,14 +781,6 @@ A: It matters?
 	|  SQLite  |   3.4.2    |
 	+----------|------------+
 
-=head1 Required Modules
-
-=over 4
-
-=item Carp
-
-=back
-
 =head1 Author
 
 C<DBIx::Admin::CreateTable> was written by Ron Savage I<E<lt>ron@savage.net.auE<gt>> in 2006.
@@ -797,8 +789,7 @@ Home page: http://savage.net.au/index.html
 
 =head1 Copyright
 
-	Copyright (c) 2006,  Ron Savage. All rights reserved.
-
+	Australian copyright (c) 2006,  Ron Savage.
 	All Programs of mine are 'OSI Certified Open Source Software';
 	you can redistribute them and/or modify them under the terms of
 	the Artistic or the GPL licences, copies of which is available at:
