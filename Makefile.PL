@@ -10,7 +10,7 @@ WriteMakefile
 	($] ge '5.005') ?
 	(
 		AUTHOR   => 'Ron Savage (ron@savage.net.au)',
-		ABSTRACT => 'A module for creating and dropping tables, primary indexes, and sequences',
+		ABSTRACT => 'Create and drop tables, primary indexes, and sequences',
     ) : (),
 	clean =>
 	{
@@ -23,13 +23,14 @@ WriteMakefile
 	},
 	DISTNAME  => 'DBIx-Admin-CreateTable',
 	NAME      => 'DBIx::Admin::CreateTable',
+	LICENSE   => 'artistic_2',
 	PL_FILES  => {},
 	PREREQ_PM =>
 	{
 		Carp       => 0,
 		DBI        => 0,
-		Test::More => 0,
-		Test::Pod  => 0,
+		Test::More=> 0,
+#		Test::Pod  => 1.45, # Make it optional. See t/pod.t
 	},
 	VERSION_FROM => 'lib/DBIx/Admin/CreateTable.pm',
 );

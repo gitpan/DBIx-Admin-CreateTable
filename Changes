@@ -1,5 +1,13 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.08  Thu Jan 30 09:09:00 2014
+	- Fix serious bug in create_table(), which did not allow digits in table and sequence names.
+		Many thanx to Mario Zieschang for reporting this. See RT#92560.
+	- Replace /usr/bin/perl with /usr/bin/env perl in the scripts.
+	- Replace common::sense with use strict and use warnings, to get uninit var warnings.
+	- Rename test files from \d.*.t to *.t.
+	- Rename CHANGES to Changes as per CPAN::Changes::Spec.
+
 2.07  Mon May 21 16:51:00 2010
 	- Spelling: MySQL uses auto_increment; SQLite uses autoincrement.
 		This should have been done for V 2.04.

@@ -33,7 +33,7 @@ our @EXPORT = qw(
 
 );
 
-our $VERSION = '2.07';
+our $VERSION = '2.08';
 
 # -----------------------------------------------
 
@@ -71,7 +71,7 @@ sub create_table
 {
 	my($self, $sql, $arg) = @_;
 	my($table_name)       = $sql;
-	$table_name           =~ s/^\s*create\s+table\s+([a-z_]+).+$/$1/is;
+	$table_name           =~ s/^\s*create\s+table\s+([a-z_0-9]+).+$/$1/is;
 
 	$arg = {}                             if (! defined $arg);
 	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
@@ -315,11 +315,11 @@ sub reset_sequence
 
 =head1 NAME
 
-C<DBIx::Admin::CreateTable> - A module for creating and dropping tables and sequences
+DBIx::Admin::CreateTable - Create and drop tables, primary indexes, and sequences
 
 =head1 Synopsis
 
-	#!/usr/bin/perl
+	#!/usr/bin/env perl
 
 	use strict;
 	use warnings;
