@@ -1,6 +1,9 @@
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
 
-print "The tests in t/2.syntax.error.t will only by run if \$DBI_DSN, \$DBI_USER and \$DBI_PASS are defined. \n";
+print "The tests in t/syntax.error.t will only by run if \$DBI_DSN, \$DBI_USER and \$DBI_PASS are defined. \n";
 
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -27,10 +30,12 @@ WriteMakefile
 	PL_FILES  => {},
 	PREREQ_PM =>
 	{
-		Carp       => 0,
-		DBI        => 0,
-		Test::More=> 0,
-#		Test::Pod  => 1.45, # Make it optional. See t/pod.t
+		'DBI'      	 => 0,
+		'Moo'        => 1.004002,
+		'strict'     => 0,
+		'Test::More' => 0,
+#		'Test::Pod'  => 1.45, # Make it optional. See t/pod.t
+		'warnings'   => 0,
 	},
 	VERSION_FROM => 'lib/DBIx/Admin/CreateTable.pm',
 );

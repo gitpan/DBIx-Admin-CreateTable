@@ -1,69 +1,59 @@
 package DBIx::Admin::CreateTable;
 
-# Note:
-#	o tab = 4 spaces || die
-#
-# Author:
-#	Ron Savage <ron@savage.net.au>
-#	Home page: http://savage.net.au/index.html
-
 use strict;
 use warnings;
 
-require Exporter;
+use Moo;
 
-our @ISA = qw(Exporter);
-
-use Carp;
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use DBIx::Admin::CreateTable ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-
+has db_vendor =>
+(
+	is       => 'rw',
+	default  => sub{return ''},
+	required => 0,
 );
 
-our $VERSION = '2.08';
+has dbh =>
+(
+	is       => 'rw',
+	isa      => sub{die "The 'dbh' parameter to new() is mandatory\n" if (! $_[0])},
+	default  => sub{return ''},
+	required => 0,
+);
+
+has primary_index_name =>
+(
+	is       => 'rw',
+	default  => sub{return {} },
+	required => 0,
+);
+
+has sequence_name =>
+(
+	is       => 'rw',
+	default  => sub{return {} },
+	required => 0,
+);
+
+has verbose =>
+(
+	is       => 'rw',
+	default  => sub{return 0},
+	required => 0,
+);
+
+our $VERSION = '2.09';
 
 # -----------------------------------------------
 
-# Preloaded methods go here.
-
-# -----------------------------------------------
-
-# Encapsulated class data.
-
+sub BUILD
 {
-	my(%_attr_data) =
-	(	# Alphabetical order.
-		_db_vendor => '',
-		_dbh       => '',
-		_verbose   => 0,
-	);
+	my($self) = @_;
 
-	sub _default_for
-	{
-		my($self, $attr_name) = @_;
+	$self -> db_vendor(uc $self -> dbh -> get_info(17) ); # SQL_DBMS_NAME.
 
-		$_attr_data{$attr_name};
-	}
+	print STDERR __PACKAGE__, '. Db vendor ' . $self -> db_vendor . ". \n" if ($self -> verbose);
 
-	sub _standard_keys
-	{
-		keys %_attr_data;
-	}
-
-} # End of encapsulated class data.
+} # End of BUILD.
 
 # --------------------------------------------------
 
@@ -73,11 +63,11 @@ sub create_table
 	my($table_name)       = $sql;
 	$table_name           =~ s/^\s*create\s+table\s+([a-z_0-9]+).+$/$1/is;
 
-	$arg = {}                             if (! defined $arg);
-	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
+	$arg = {}                           if (! defined $arg);
+	$$arg{$table_name} = {}             if (! defined $$arg{$table_name});
+	$$arg{$table_name}{no_sequence} = 0 if (! defined $$arg{$table_name}{no_sequence});
 
-	if (! $$arg{$table_name}{'no_sequence'})
+	if (! $$arg{$table_name}{no_sequence})
 	{
 		my($sequence_name) = $self -> generate_primary_sequence_name($table_name);
 
@@ -85,43 +75,33 @@ sub create_table
 		{
 			my($sql) = "create sequence $sequence_name";
 
-			$$self{'_dbh'} -> do($sql);
+			$self -> dbh -> do($sql);
 
-			print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
+			print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
 
-			if ($$self{'_dbh'} -> errstr() )
+			if ($self -> dbh -> errstr() )
 			{
-				return $$self{'_dbh'} -> errstr(); # Failure.
+				return $self -> dbh -> errstr(); # Failure.
 			}
 
-			print STDERR __PACKAGE__, ". Created sequence '$sequence_name'. \n" if ($$self{'_verbose'});
+			print STDERR __PACKAGE__, ". Created sequence '$sequence_name'. \n" if ($self -> verbose);
 		}
 	}
 
-	$$self{'_dbh'} -> do($sql);
+	$self -> dbh -> do($sql);
 
-	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
+	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
 
-	if ($$self{'_dbh'} -> errstr() )
+	if ($self -> dbh -> errstr() )
 	{
-		return $$self{'_dbh'} -> errstr(); # Failure.
+		return $self -> dbh -> errstr(); # Failure.
 	}
 
-	print STDERR __PACKAGE__, ". Created table '$table_name'. \n" if ($$self{'_verbose'});
+	print STDERR __PACKAGE__, ". Created table '$table_name'. \n" if ($self -> verbose);
 
 	return ''; # Success.
 
 } # End of create_table.
-
-# --------------------------------------------------
-
-sub db_vendor
-{
-	my($self) = @_;
-
-	return $$self{'_db_vendor'};
-
-} # End of db_vendor.
 
 # --------------------------------------------------
 
@@ -131,45 +111,56 @@ sub drop_table
 	my($sequence_name)           = $self -> generate_primary_sequence_name($table_name);
 
 	# Turn off RaiseError so we don't error if the sequence and table being deleted do not exist.
+	# We do this by emulating local $$dbh{RaiseError}.
 
-	local $$self{'_dbh'}{'RaiseError'};
+	my($dbh)          = $self -> dbh;
+	my($raise_error)  = $$dbh{RaiseError};
+	$$dbh{RaiseError} = 0;
 
-	$arg = {}                             if (! defined $arg);
-	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
+	$self -> dbh($dbh);
+
+	$arg = {}                           if (! defined $arg);
+	$$arg{$table_name} = {}             if (! defined $$arg{$table_name});
+	$$arg{$table_name}{no_sequence} = 0 if (! defined $$arg{$table_name}{no_sequence});
 
 	my($sql);
 
 	# For Oracle, drop the sequence before dropping the table.
 
-	if ( ($$self{'_db_vendor'} eq 'ORACLE') && ! $$arg{$table_name}{'no_sequence'})
+	if ( ($self -> db_vendor eq 'ORACLE') && ! $$arg{$table_name}{no_sequence})
 	{
 		$sql = "drop sequence $sequence_name";
 
-		$$self{'_dbh'} -> do($sql);
+		$self -> dbh -> do($sql);
 
-		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'});
+		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
+		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($self -> verbose);
 	}
 
 	$sql = "drop table $table_name";
 
-	$$self{'_dbh'} -> do($sql);
+	$self -> dbh -> do($sql);
 
-	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-	print STDERR __PACKAGE__, ". Dropped table '$table_name'. \n" if ($$self{'_verbose'});
+	print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
+	print STDERR __PACKAGE__, ". Dropped table '$table_name'. \n" if ($self -> verbose);
 
 	# For Postgres, drop the sequence after dropping the table.
 
-	if ( ($$self{'_db_vendor'} eq 'POSTGRESQL') && ! $$arg{$table_name}{'no_sequence'})
+	if ( ($self -> db_vendor eq 'POSTGRESQL') && ! $$arg{$table_name}{no_sequence})
 	{
 		$sql = "drop sequence $sequence_name";
 
-		$$self{'_dbh'} -> do($sql);
+		$self -> dbh -> do($sql);
 
-		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($$self{'_verbose'});
+		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
+		print STDERR __PACKAGE__, ". Dropped sequence '$sequence_name'. \n" if ($self -> verbose);
 	}
+
+	# Undo local $$dbh{RaiseError}.
+
+	$$dbh{RaiseError} = $raise_error;
+
+	$self -> dbh($dbh);
 
 	return '';
 
@@ -179,13 +170,19 @@ sub drop_table
 
 sub generate_primary_index_name
 {
-	my($self, $table_name)                     = @_;
-	$$self{'_primary_index_name'}{$table_name} ||=
-	$$self{'_db_vendor'} eq 'POSTGRESQL'
-	? "${table_name}_pkey"
-	: ''; # MySQL, Oracle, SQLite.
+	my($self, $table_name) = @_;
+	my($hashref) = $self -> primary_index_name;
 
-	return $$self{'_primary_index_name'}{$table_name};
+	if (! $$hashref{$table_name})
+	{
+		$$hashref{$table_name} = $self -> db_vendor eq 'POSTGRESQL'
+			? "${table_name}_pkey"
+			: ''; # MySQL, Oracle, SQLite.
+
+		$self -> primary_index_name($hashref);
+	}
+
+	return $$hashref{$table_name};
 
 } # End of generate_primary_index_name.
 
@@ -196,11 +193,11 @@ sub generate_primary_key_sql
 	my($self, $table_name) = @_;
 	my($sequence_name)     = $self -> generate_primary_sequence_name($table_name);
 	my($primary_key)       =
-	($$self{'_db_vendor'} eq 'MYSQL')
+	($self -> db_vendor eq 'MYSQL')
 	? 'integer primary key auto_increment'
-	: ($$self{'_db_vendor'} eq 'SQLITE')
+	: ($self -> db_vendor eq 'SQLITE')
 	? 'integer primary key autoincrement'
-	: $$self{'_db_vendor'} eq 'ORACLE'
+	: $self -> db_vendor eq 'ORACLE'
 	? 'integer primary key'
 	: "integer primary key default nextval('$sequence_name')"; # Postgres.
 
@@ -212,48 +209,21 @@ sub generate_primary_key_sql
 
 sub generate_primary_sequence_name
 {
-	my($self, $table_name)                = @_;
-	$$self{'_sequence_name'}{$table_name} ||=
-	( ($$self{'_db_vendor'} eq 'MYSQL') || ($$self{'_db_vendor'} eq 'SQLITE') )
-	? ''
-	: "${table_name}_id_seq"; # Oracle, Postgres.
+	my($self, $table_name) = @_;
+	my($hashref) = $self -> sequence_name;
 
-	return $$self{'_sequence_name'}{$table_name};
-
-} # End of generate_primary_sequence_name.
-
-# -----------------------------------------------
-
-sub new
-{
-	my($class, %arg) = @_;
-	my($self)        = bless({}, $class);
-
-	for my $attr_name ($self -> _standard_keys() )
+	if (! $$hashref{$table_name})
 	{
-		my($arg_name) = $attr_name =~ /^_(.*)/;
+		$$hashref{$table_name} = $self -> db_vendor =~ /(?:MYSQL|SQLITE)/
+			? ''
+			: "${table_name}_id_seq"; # Oracle, Postgres.
 
-		if (exists($arg{$arg_name}) )
-		{
-			$$self{$attr_name} = $arg{$arg_name};
-		}
-		else
-		{
-			$$self{$attr_name} = $self -> _default_for($attr_name);
-		}
+		$self -> sequence_name($hashref);
 	}
 
-	Carp::croak("You must supply a value for the 'dbh' parameter") if (! $$self{'_dbh'});
+	return $$hashref{$table_name};
 
-	$$self{'_db_vendor'}          = uc $$self{'_dbh'} -> get_info(17); # SQL_DBMS_NAME.
-	$$self{'_primary_index_name'} = {};
-	$$self{'_sequence_name'}      = {};
-
-	print STDERR __PACKAGE__, ". Db vendor '$$self{'_db_vendor'}'. \n" if ($$self{'_verbose'});
-
-	return $self;
-
-} # End of new.
+} # End of generate_primary_sequence_name.
 
 # -----------------------------------------------
 # Assumption: This code is only called in the case
@@ -272,9 +242,9 @@ sub reset_all_sequences
 {
 	my($self, $arg) = @_;
 
-	if ($$self{'_db_vendor'} ne 'MYSQL')
+	if ($self -> db_vendor ne 'MYSQL')
 	{
-		$self -> reset_sequence($_, $arg) for keys %{$$self{'_sequence_name'} };
+		$self -> reset_sequence($_, $arg) for keys %{$self -> sequence_name};
 	}
 
 } # End of reset_all_sequences.
@@ -285,14 +255,14 @@ sub reset_sequence
 {
 	my($self, $table_name, $arg) = @_;
 
-	$arg = {}                             if (! defined $arg);
-	$$arg{$table_name} = {}               if (! defined $$arg{$table_name});
-	$$arg{$table_name}{'no_sequence'} = 0 if (! defined $$arg{$table_name}{'no_sequence'});
+	$arg = {}                           if (! defined $arg);
+	$$arg{$table_name} = {}             if (! defined $$arg{$table_name});
+	$$arg{$table_name}{no_sequence} = 0 if (! defined $$arg{$table_name}{no_sequence});
 
-	if (! $$arg{$table_name}{'no_sequence'})
+	if (! $$arg{$table_name}{no_sequence})
 	{
 		my($sequence_name) = $self -> generate_primary_sequence_name($table_name);
-		my($sth)           = $$self{'_dbh'} -> prepare("select count(*) from $table_name");
+		my($sth)           = $self -> dbh -> prepare("select count(*) from $table_name");
 
 		$sth -> execute();
 
@@ -301,10 +271,10 @@ sub reset_sequence
 		my($sql) = "select setval('$sequence_name', $max)";
 
 		$sth -> finish();
-		$$self{'_dbh'} -> do($sql);
+		$self -> dbh -> do($sql);
 
-		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($$self{'_verbose'});
-		print STDERR __PACKAGE__, ". Reset table '$table_name', sequence '$sequence_name' to $max. \n" if ($$self{'_verbose'});
+		print STDERR __PACKAGE__, ". SQL: $sql. \n" if ($self -> verbose);
+		print STDERR __PACKAGE__, ". Reset table '$table_name', sequence '$sequence_name' to $max. \n" if ($self -> verbose);
 	}
 
 } # End of reset_sequence.
@@ -345,11 +315,13 @@ DBIx::Admin::CreateTable - Create and drop tables, primary indexes, and sequence
 	)
 	SQL
 
+See also xt/author/fk.t in L<DBIx::Admin::TableInfo>.
+
 =head1 Description
 
 C<DBIx::Admin::CreateTable> is a pure Perl module.
 
-Database vendors supported: MySQL, Oracle, Postgres.
+Database vendors supported: MySQL, Oracle, Postgres, SQLite.
 
 Assumptions:
 
@@ -379,7 +351,7 @@ are named after both the table and the column.
 
 new(...) returns an object of type C<DBIx::Admin::CreateTable>.
 
-This is the class's contructor.
+This is the class contructor.
 
 Usage: DBIx::Admin::CreateTable -> new().
 
@@ -391,7 +363,7 @@ For each parameter you wish to use, call new as new(param_1 => value_1, ...).
 
 =item dbh
 
-This is a database handle, returned from DBI's connect() call.
+This is a database handle, returned from the DBI connect() call.
 
 This parameter is mandatory.
 
@@ -409,7 +381,7 @@ The default is 0.
 
 =head1 Method: create_table($sql, $arg)
 
-Returns '' (empty string) if successful and DBI's errstr() if there is an error.
+Returns '' (empty string) if successful and DBI errstr() if there is an error.
 
 $sql is the SQL to create the table.
 
@@ -581,7 +553,7 @@ SQL:
 	|  SQLite  |        drop table $table_name        | drop table $table_name |
 	+----------|--------------------------------------|------------------------+
 
-Note: drop_table() turns off RaiseError so we don't error if the sequence and table being deleted do not exist.
+Note: drop_table() turns off RaiseError so we do not error if the sequence and table being deleted do not exist.
 This is new in V 2.00.
 
 =head1 Method: generate_primary_index_name($table_name)
@@ -692,7 +664,7 @@ Summary:
 
 Returns nothing.
 
-Resets the primary key sequence for the given table, except if it's marked by $arg as not having a sequence.
+Resets the primary key sequence for the given table, except if it is marked by $arg as not having a sequence.
 
 $arg is an optional hash ref of options, the same as for C<create_table()>.
 
@@ -716,9 +688,120 @@ Summary:
 
 =head1 FAQ
 
-Q: Do I include the name of an auto-populated column in an insert statement?
+=head2 Which versions of the servers did you test?
 
-A: Depends on the server. Some databases, e.g. Postgres, do I<not> want the name of the primary key
+	Versions as at 2014-03-07
+	+----------|------------+
+	|  Vendor  |     V      |
+	+----------|------------+
+	|  MariaDB |   5.5.36   |
+	+----------|------------+
+	|  Oracle  | 10.2.0.1.0 | (Not tested for years)
+	+----------|------------+
+	| Postgres |   9.1.12   |
+	+----------|------------+
+	|  SQLite  |   3.7.17   |
+	+----------|------------+
+
+=head2 Do all database servers accept the same 'create table' commands?
+
+No. You have been warned.
+
+References for 'Create table':
+L<MySQL|https://dev.mysql.com/doc/refman/5.7/en/create-table.html>.
+L<Postgres|http://www.postgresql.org/docs/9.3/interactive/sql-createtable.html>.
+L<SQLite|https://sqlite.org/lang_createtable.html>.
+
+Consider these:
+
+	create table one
+	(
+		id   integer primary key autoincrement,
+		data varchar(255)
+	) $engine
+
+	create table two
+	(
+		id      integer primary key autoincrement,
+		one_id  integer not null,
+		data    varchar(255),
+		foreign key(one_id) references one(id)
+	) $engine
+
+Putting the 'foreign key' clause at the end makes it a table constraint. Some database servers, e.g. MySQL and Postgres,
+allow you to attach it to a particular column, as explained next.
+
+=over 4
+
+=item o MySQL
+
+The creates work as given, where $engine eq 'engine = innodb'.
+
+Further, you can re-order the clauses in the 2nd create:
+
+	create table two
+	(
+		id      integer primary key autoincrement,
+		one_id  integer not null,
+		foreign key(one_id) references one(id),
+		data    varchar(255)
+	) $engine
+
+This also works, where $engine eq 'engine = innodb'.
+
+However, if you use:
+
+	create table two
+	(
+		id      integer primary key autoincrement,
+		one_id  integer not null references one(id),
+		data    varchar(255)
+	) $engine
+
+Then the 'references' (foreign key) clause is parsed but discarded, even with 'engine = innodb'.
+
+=item o Postgres
+
+The creates work as given, where $engine = ''.
+
+And you can re-order the clauses, as in the first example for MySQL.
+
+=item o SQLite
+
+The creates work as given, where $engine = ''.
+
+But if you re-order the clauses:
+
+	create table two
+	(
+		id      integer primary key autoincrement,
+		one_id  integer not null,
+		foreign key(one_id) references one(id),
+		data    varchar(255)
+	) $engine
+
+Then you get a syntax error.
+
+However, if you use:
+
+	create table two
+	(
+		id      integer primary key autoincrement,
+		one_id  integer not null references one(id),
+		data    varchar(255)
+	) $engine
+
+Then the 'references' (foreign key) clause is parsed, and it does create a foreign key relationship.
+
+=back
+
+Do not forget this when using SQLite:
+
+	$dbh -> do('pragma foreign_keys = on') if ($dsn =~ /SQLite/i);
+
+=head2 Do I include the name of an auto-populated column in an insert statement?
+
+Depends on the server. Some databases, e.g. Postgres, do I<not> want the name of the primary key
 in the insert statement if the server is to generate a value for a column.
 
 SQL for insert:
@@ -737,13 +820,13 @@ SQL for insert:
 	|  SQLite  |          insert into $table_name (id, data) values (undef, ?)         |
 	+----------|-----------------------------------------------------------------------+
 
-Q: Do I have to use a sequence to populate a primary key?
+=head2 Do I have to use a sequence to populate a primary key?
 
-A: Well, no, actually. See next question.
+Well, no, actually. See next question.
 
-Q: How to I override the auto-populated value for a primary key column?
+=head2 How to I override the auto-populated value for a primary key column?
 
-A: By including the name and the value in the insert statement.
+By including the name and the value in the insert statement.
 
 SQL for insert:
 
@@ -760,26 +843,23 @@ SQL for insert:
 	|  SQLite  | insert into $table_name (id, data) values (?, ?) |
 	+----------|--------------------------------------------------+
 
-Q: Are primary keys always not null and unique?
+=head2 Are primary keys always not null and unique?
 
-A: Yes. All servers document primary key as meaning both non null and unique.
+Yes. All servers document primary key as meaning both non null and unique.
 
-Q: Which versions of the servers did you test?
+=head2 See Also
 
-A: It matters?
+L<DBIx::Admin::DSNManager>.
 
-	Comment: Versions.
-	+----------|------------+
-	|  Vendor  |     V      |
-	+----------|------------+
-	|  MySQL   |   5.0.45   |
-	+----------|------------+
-	|  Oracle  | 10.2.0.1.0 |
-	+----------|------------+
-	| Postgres |  8.2.4-1   |
-	+----------|------------+
-	|  SQLite  |   3.4.2    |
-	+----------|------------+
+L<DBIx::Admin::TableInfo>.
+
+=head1 Version Numbers
+
+Version numbers < 1.00 represent development versions. From 1.00 up, they are production versions.
+
+=head1 Support
+
+Log a bug on RT: L<https://rt.cpan.org/Public/Dist/Display.html?Name=DBIx-Admin-CreateTable>.
 
 =head1 Author
 

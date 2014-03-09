@@ -17,7 +17,7 @@ if ($dbh)
 }
 else
 {
-		plan (skip_all => '$DBI_DSN etc not defined, so skipping all tests in 2.syntax.error.pl');
+		plan (skip_all => '$DBI_DSN etc not defined, so skipping all tests in syntax.error.pl');
 }
 
 my($creator)            = DBIx::Admin::CreateTable -> new(dbh => $dbh, verbose => 0);

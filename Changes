@@ -1,5 +1,13 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.09  Thu Mar  6 09:45:07 2014
+	- Adopt Moo. But not Moops - I don't need that level of complexity.
+	- Move t/pod.t to xt/author/.
+	- Add t/version.t.
+	- Add use strict and use warnings to Build.PL and Makefile.PL.
+	- Newsflash: DBIx::Admin::CreateTable and DBIx::Admin::DSNManager are now used for the author's testing of
+		DBIx::Admin::TableInfo.
+
 2.08  Thu Jan 30 09:09:00 2014
 	- Fix serious bug in create_table(), which did not allow digits in table and sequence names.
 		Many thanx to Mario Zieschang for reporting this. See RT#92560.
