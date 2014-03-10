@@ -30,12 +30,13 @@ WriteMakefile
 	PL_FILES  => {},
 	PREREQ_PM =>
 	{
-		'DBI'      	 => 0,
-		'Moo'        => 1.004002,
-		'strict'     => 0,
-		'Test::More' => 0,
-#		'Test::Pod'  => 1.45, # Make it optional. See t/pod.t
-		'warnings'   => 0,
+		'DBI'           => 0,
+		'Moo'           => 1.004002,
+		'strict'        => 0,
+		'Test::More'    => 0,
+#		'Test::Pod'     => 1.45, # Make it optional. See t/pod.t
+		'Test::Version' => 1.002003,
+		'warnings'      => 0,
 	},
 	VERSION_FROM => 'lib/DBIx/Admin/CreateTable.pm',
 );

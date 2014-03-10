@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::Admin::CreateTable.
 
+2.10  Mon Mar 10 13:27:00 2014
+	- Add Test::Version to the pre-reqs.
+
 2.09  Thu Mar  6 09:45:07 2014
 	- Adopt Moo. But not Moops - I don't need that level of complexity.
 	- Move t/pod.t to xt/author/.

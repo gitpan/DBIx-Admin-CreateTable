@@ -4,6 +4,7 @@ author:
   - 'Ron Savage <ron@savage.net.au>'
 build_requires:
   Test::More: 0
+  Test::Version: 1.002003
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
@@ -16,7 +17,7 @@ name: DBIx-Admin-CreateTable
 provides:
   DBIx::Admin::CreateTable:
     file: lib/DBIx/Admin/CreateTable.pm
-    version: 2.09
+    version: 2.10
 requires:
   DBI: 0
   Moo: 1.004002
@@ -24,4 +25,4 @@ requires:
   warnings: 0
 resources:
   license: http://www.perlfoundation.org/artistic_license_2_0
-version: 2.09
+version: 2.10

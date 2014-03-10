@@ -13,8 +13,9 @@ Module::Build -> new
 	dist_author    => 'Ron Savage <ron@savage.net.au>',
 	build_requires =>
 	{
-		'Test::More' => 0,
-#		'Test::Pod'  => 1.45, # Make it optional. See t/pod.t
+		'Test::More'    => 0,
+#		'Test::Pod'     => 1.45, # Make it optional. See t/pod.t
+		'Test::Version' => 1.002003,
 	},
 	configure_requires =>
 	{
